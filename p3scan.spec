@@ -1,6 +1,6 @@
 %define name	p3scan
 %define version	2.3.2
-%define release %mkrel 17
+%define release %mkrel 18
 
 Summary:	Virus scanning transparent proxy server for POP3
 Name:		%{name}
@@ -40,6 +40,7 @@ Proxy servers.
 %patch1
 
 %build
+%serverbuild
 %make OPTS="$RPM_OPT_FLAGS" 
 
 %install
