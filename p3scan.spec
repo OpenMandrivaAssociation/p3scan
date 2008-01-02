@@ -24,6 +24,7 @@ Requires:	clamd
 Requires:	sendmail-command
 Requires(pre):	rpm-helper
 Conflicts:	pop3vscan
+BuildRoot:	%{_tmppath}/%{name}-%{version}
 
 %description
 This is a full-transparent proxy-server for POP3-Clients. It runs on
