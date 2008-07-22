@@ -1,6 +1,6 @@
 %define name	p3scan
 %define version	2.3.2
-%define release %mkrel 18
+%define release %mkrel 20
 
 Summary:	Virus scanning transparent proxy server for POP3
 Name:		%{name}
