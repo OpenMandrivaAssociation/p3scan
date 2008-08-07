@@ -1,21 +1,19 @@
 %define name	p3scan
-%define version	2.3.2
-%define release %mkrel 20
+%define version	3.0
+%define release %mkrel 0.rc1.1
 
 Summary:	Virus scanning transparent proxy server for POP3
 Name:		%{name}
 Version:	%{version}
 Release:	%{release}
-License:	GPL
+License:	GPLv2+
 Group:		Networking/Mail
 URL:		http://p3scan.sourceforge.net/
-Source0:	http://prdownloads.sourceforge.net/%{name}/%{name}-%{version}.tar.bz2
-Source1:    	%{name}.init.bz2
-Patch0:		%{name}-2.3.2-mdkconf.patch
-Patch1:		%{name}-conf.patch
+Source0:	http://prdownloads.sourceforge.net/%{name}/%{name}-%{version}_rc1.tar.gz
+Patch0:		%{name}-iptables-rules.patch
 BuildRequires:	pcre-devel
 BuildRequires:	openssl-devel
-Requires:	shorewall
+BuildRequires:	clamav-devel
 Requires:	pcre
 Requires:	perl-Mail-SpamAssassin
 Requires:	spamassassin-spamc
@@ -35,13 +33,13 @@ especially when used in conjunction with a firewall and other Internet
 Proxy servers.
 
 %prep
-%setup -q
-%patch0 -p1 -b .mdkconf
-%patch1
+%setup -q -n %{name}-%{version}_rc1
+%patch0 -p0
 
 %build
 %serverbuild
-%make OPTS="$RPM_OPT_FLAGS" 
+%configure --with-user=clamav
+%make
 
 %install
 rm -rf %{buildroot}
@@ -49,23 +47,29 @@ mkdir -p %{buildroot}/var/spool/%{name}/children
 mkdir -p %{buildroot}/var/spool/%{name}/notify
 mkdir -p %{buildroot}/var/run/%{name}
 
-install -m755 %{name} -D %{buildroot}%{_sbindir}/%{name}
-install -m644 %{name}.conf -D %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
-install -m644 %{name}-*.mail -D %{buildroot}%{_sysconfdir}/%{name}/
-install -m644 %{name}.8.gz -D %{buildroot}%{_mandir}/man8/%{name}.8.gz
-install -m644 %{name}_readme.8.gz -D %{buildroot}%{_mandir}/man8/%{name}_readme.8.gz
+%makeinstall_std
 
-mkdir -p %{buildroot}/%{_initrddir}/
-bzcat %{SOURCE1} >  %{buildroot}/%{_initrddir}/%{name}
-chmod 755 %{buildroot}/%{_initrddir}/%{name}
-
-cat << EOF >%{buildroot}%{_sysconfdir}/%{name}/firewall.sh
+mkdir -p %{buildroot}/%{_sysconfdir}/%{name}
+cat << EOF >%{buildroot}%{_sysconfdir}/%{name}/redirect_on.sh
 #!/bin/bash
 iptables -t nat -A PREROUTING -p tcp -i lo --dport pop3 -j REDIRECT --to 8110
 iptables -t nat -I OUTPUT -p tcp --dport 110 -j REDIRECT --to 8110
 iptables -t nat -I OUTPUT -p tcp --dport 110 -m owner --uid-owner clamav -j ACCEPT
 /etc/init.d/iptables restart
 EOF
+cat << EOF >%{buildroot}%{_sysconfdir}/%{name}/redirect_off.sh
+#!/bin/bash
+iptables -t nat -D PREROUTING -p tcp -i lo --dport pop3 -j REDIRECT --to 8110
+iptables -t nat -D OUTPUT -p tcp --dport 110 -j REDIRECT --to 8110
+iptables -t nat -D OUTPUT -p tcp --dport 110 -m owner --uid-owner clamav -j ACCEPT
+/etc/init.d/iptables restart
+EOF
+
+chmod 755 %{buildroot}%{_sysconfdir}/%{name}/redirect*
+
+#dirty workaround, --docdir seems not to work (to fix)
+mkdir -p %{buildroot}%{_docdir}/%{name}
+mv %{buildroot}/usr/doc/%{name}-%{version}_rc1 %{buildroot}%{_docdir}/%{name}
 
 %post
 %_post_service %{name}
@@ -82,11 +86,11 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
-%doc AUTHORS CHANGELOG CONTRIBUTERS NEWS README README-rpm spamfaq.html TODO.list
-%{_sbindir}/%{name}
+%doc AUTHORS CONTRIBUTERS NEWS README README-rpm spamfaq.html
+%{_bindir}/%{name}
 %dir %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/*
-%{_initrddir}/%{name}
+%{_sysconfdir}/init.d/%{name}
 %{_mandir}/man8/*
 %defattr(-,clamav,mail)
 %dir /var/spool/%{name}
