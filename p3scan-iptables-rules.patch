@@ -1,0 +1,26 @@
+--- etc/init.d/p3scan.orig	2008-08-07 11:40:22.000000000 +0200
++++ etc/init.d/p3scan	2008-08-07 11:47:51.000000000 +0200
+@@ -36,6 +36,7 @@
+       echo -en "  OK  \c"
+       $SETCOLOR_NORMAL
+       echo "]"
++      sh /etc/p3scan/redirect_on.sh
+       ;;
+    stop)
+       # Stop p3scan
+@@ -44,6 +45,7 @@
+          CMD="kill `cat /var/run/p3scan/p3scan.pid` &>/dev/null"
+          pretty
+          rm -f /var/run/p3scan/p3scan.pid
++         sh /etc/p3scan/redirect_off.sh
+       else
+          echo -en "Stopping p3scan"
+          killall p3scan &>/dev/null
+@@ -53,6 +55,7 @@
+          echo -en "  OK  \c"
+          $SETCOLOR_NORMAL
+          echo "]"
++         sh /etc/p3scan/redirect_off.sh
+       fi
+       ;;
+    status)
