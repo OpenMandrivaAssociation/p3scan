@@ -8,7 +8,7 @@ Version:	%{version}
 Release:	%{release}
 License:	GPLv2+
 Group:		Networking/Mail
-URL:		http://p3scan.sourceforge.net/
+URL:		https://p3scan.sourceforge.net/
 Source0:	http://prdownloads.sourceforge.net/%{name}/%{name}-%{version}_rc1.tar.gz
 Patch0:		%{name}-iptables-rules.patch
 BuildRequires:	pcre-devel
